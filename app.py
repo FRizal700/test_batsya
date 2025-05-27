@@ -92,7 +92,7 @@ def main():
     if base_img:
         cols = st.columns([1, 3, 1])
         with cols[1]:
-            st.image(base_img, use_container_width=True)
+            st.image(base_img, width=400)  # Diubah dari use_container_width ke width tetap
 
     # 2. Pemilihan komponen
     for category in ["Mata", "Mulut", "Baju", "Aksesoris"]:
@@ -199,7 +199,7 @@ def main():
         st.subheader("Hasil Akhir")
         cols = st.columns([1, 3, 1])
         with cols[1]:
-            st.image(result, use_container_width=True)
+            st.image(result, width=500)  # Diubah dari use_container_width ke width tetap
             
             # Tombol download
             buf = BytesIO()
@@ -208,11 +208,10 @@ def main():
                 "⬇️ Download Batsya",
                 buf.getvalue(),
                 "batsya.png",
-                "image/png",
-                use_container_width=True
+                "image/png"
             )
 
-            # Copyright notice - TAMBAHAN BARU
+            # Copyright notice
             st.markdown("""
             <div style="text-align: center; margin-top: 20px; color: #666;">
                 Thanks to Erlia/Erza, Mie Goreng, beserta para member yang telah membuat gambar-gambar diatas, shout out to them o7.
