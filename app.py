@@ -3,6 +3,7 @@ from PIL import Image
 from io import BytesIO
 import os
 import base64
+import time
 
 # ========== KONFIGURASI ==========
 COMPONENTS = {
@@ -38,15 +39,28 @@ COMPONENTS = {
         "c8": "assets/c8.png",
         "c9": "assets/c9.png"
     },
-    "Aksesoris": {
+    "Glassess": {
         "g1": "assets/g1.webp",
         "g2": "assets/g2.webp",
         "g3": "assets/g3.webp",
         "g4": "assets/g4.webp",
         "g5": "assets/g5.webp",
         "None": None
+    },
+    "Topi": {
+        "t1": "assets/t1.webp",
+        "t2": "assets/t2.webp",
+        "t3": "assets/t3.webp",
+        "t4": "assets/t4.webp",
+        "t5": "assets/t5.webp",
+        "t6": "assets/t6.webp",
+        "t7": "assets/t7.webp",
+        "None": None
     }
 }
+
+# Cache untuk gambar yang sudah dimuat
+IMAGE_CACHE = {}
 
 def image_to_base64(img):
     buffered = BytesIO()
@@ -54,10 +68,18 @@ def image_to_base64(img):
     return base64.b64encode(buffered.getvalue()).decode("utf-8")
 
 def load_image(path):
+    if path is None:
+        return None
+        
+    if path in IMAGE_CACHE:
+        return IMAGE_CACHE[path]
+        
     try:
-        return Image.open(path).convert("RGBA")
-    except:
-        st.error(f"File tidak ditemukan: {path}")
+        img = Image.open(path).convert("RGBA")
+        IMAGE_CACHE[path] = img  # Cache the image
+        return img
+    except Exception as e:
+        st.error(f"Gagal memuat gambar {path}: {str(e)}")
         return None
 
 def main():
@@ -71,19 +93,22 @@ def main():
             "Mata": None,
             "Mulut": None,
             "Baju": None,
-            "Aksesoris": None
+            "Glassess": None,
+            "Topi": None
         }
     if 'positions' not in st.session_state:
         st.session_state.positions = {
             "Mata": {"x": 0, "y": 0, "scale": 1.0},
             "Mulut": {"x": 0, "y": 0, "scale": 1.0},
-            "Aksesoris": {"x": 0, "y": 0, "scale": 1.0}
+            "Glassess": {"x": 4, "y": -101, "scale": 1.0},
+            "Topi": {"x": 134, "y": -110, "scale": 0.40}  # Posisi default lebih tinggi untuk topi
         }
     if 'adjust_settings' not in st.session_state:
         st.session_state.adjust_settings = {
             "Mata": False,
             "Mulut": False,
-            "Aksesoris": True  # Default aktif untuk aksesoris
+            "Glassess": True,
+            "Topi": True
         }
 
     # 1. Tampilkan Base Image
@@ -92,10 +117,10 @@ def main():
     if base_img:
         cols = st.columns([1, 3, 1])
         with cols[1]:
-            st.image(base_img, width=400)  # Diubah dari use_container_width ke width tetap
+            st.image(base_img, width=400)
 
     # 2. Pemilihan komponen
-    for category in ["Mata", "Mulut", "Baju", "Aksesoris"]:
+    for category in ["Mata", "Mulut", "Baju", "Glassess", "Topi"]:
         st.subheader(f"Pilih {category}")
         
         options = COMPONENTS[category]
@@ -135,9 +160,9 @@ def main():
                 )
 
     # 4. Kontrol posisi dan ukuran
-    for category in ["Mata", "Mulut", "Aksesoris"]:
+    for category in ["Mata", "Mulut", "Glassess", "Topi"]:
         if st.session_state.selected[category] and (
-            category == "Aksesoris" or st.session_state.adjust_settings[category]
+            category in ["Glassess", "Topi"] or st.session_state.adjust_settings[category]
         ):
             st.subheader(f"Pengaturan {category}")
             
@@ -161,7 +186,7 @@ def main():
             
             with col3:
                 new_scale = st.slider(
-                    "Ukuran", 0.5, 2.0,
+                    "Ukuran", 0.1, 3.0,
                     st.session_state.positions[category]["scale"], 0.1,
                     key=f"{category}_scale"
                 )
@@ -169,29 +194,38 @@ def main():
 
     # 5. Gabungkan gambar
     if base_img and any(st.session_state.selected.values()):
-        result = base_img.copy()
+        start_time = time.time()
         
-        for layer in ["Baju", "Mata", "Mulut", "Aksesoris"]:
+        # Tambahkan padding di atas (150px) dan samping (100px)
+        padded_width = base_img.width + 200  # 100 kiri + 100 kanan
+        padded_height = base_img.height + 200  # 150 atas + 50 bawah
+        result = Image.new("RGBA", (padded_width, padded_height), (0, 0, 0, 0))
+        
+        # Posisikan base image di tengah dengan padding atas lebih besar
+        base_x = 100  # Padding kiri
+        base_y = 150  # Padding atas
+        result.paste(base_img, (base_x, base_y), base_img)
+        
+        # Urutan layer yang benar
+        layer_order = ["Baju", "Mata", "Mulut", "Glassess", "Topi"]
+        
+        for layer in layer_order:
             if st.session_state.selected[layer]:
                 img = load_image(st.session_state.selected[layer])
                 if img:
                     # Apply scaling
-                    if layer in ["Mata", "Mulut", "Aksesoris"]:
+                    if layer in st.session_state.positions:
                         width, height = img.size
-                        new_size = (
-                            int(width * st.session_state.positions[layer]["scale"]), 
-                            int(height * st.session_state.positions[layer]["scale"])
-                        )
+                        scale = st.session_state.positions[layer]["scale"]
+                        new_size = (int(width * scale), int(height * scale))
                         img = img.resize(new_size, Image.LANCZOS)
                     
-                    # Apply position
-                    x, y = 0, 0
-                    if layer in ["Mata", "Mulut"] and st.session_state.adjust_settings[layer]:
-                        x = st.session_state.positions[layer]["x"]
-                        y = st.session_state.positions[layer]["y"]
-                    elif layer == "Aksesoris":
-                        x = st.session_state.positions[layer]["x"]
-                        y = st.session_state.positions[layer]["y"]
+                    # Apply position (ditambahkan offset base image)
+                    if layer in st.session_state.positions:
+                        x = st.session_state.positions[layer]["x"] + base_x
+                        y = st.session_state.positions[layer]["y"] + base_y
+                    else:
+                        x, y = base_x, base_y
                     
                     result.paste(img, (x, y), img)
 
@@ -199,7 +233,7 @@ def main():
         st.subheader("Hasil Akhir")
         cols = st.columns([1, 3, 1])
         with cols[1]:
-            st.image(result, width=500)  # Diubah dari use_container_width ke width tetap
+            st.image(result, width=500)
             
             # Tombol download
             buf = BytesIO()
@@ -211,6 +245,9 @@ def main():
                 "image/png"
             )
 
+            # Debug info
+            st.text(f"Waktu proses: {time.time() - start_time:.2f} detik")
+            
             # Copyright notice
             st.markdown("""
             <div style="text-align: center; margin-top: 20px; color: #666;">
