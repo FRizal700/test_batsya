@@ -1,2 +1,2 @@
-Pillow==10.0.0
+Pillow==10.3.0  # Versi yang lebih baru
 streamlit==1.29.0
