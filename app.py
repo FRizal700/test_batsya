@@ -214,7 +214,7 @@ def main():
             # Copyright notice
             st.markdown("""
             <div style="text-align: center; margin-top: 20px; color: #666;">
-                Thanks to Erlia/Erza, Mie Goreng, beserta para member yang telah membuat gambar-gambar diatas, shout out to them o7.
+                Thanks to Erlia/Erza, Mie Goreng, beserta para member yang telah membantu, shout out to them o7.
                 \n
                 © 2025 TheKnightFox - All Rights Reserved
             </div>
