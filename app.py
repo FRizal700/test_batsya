@@ -216,7 +216,7 @@ def main():
     # 3. Toggle untuk atur posisi
     for category in ["Mata", "Mulut", "Glassess", "Topi", "FanKiri", "FanKanan"]:
         if st.session_state.selected[category]:
-            with st.expander(f"⚙️ Atur posisi {category}?", expanded=False):
+            with st.expander(f"⚙️ Mau Atur posisi {category} ? ⚙️", expanded=False):
                 st.session_state.adjust_settings[category] = st.checkbox(
                     f"Ya, atur posisi {category}",
                     value=st.session_state.adjust_settings[category],
