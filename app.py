@@ -165,8 +165,8 @@ def main():
         st.session_state.adjust_settings = {
             "Mata": False,
             "Mulut": False,
-            "Glassess": True,
-            "Topi": True,
+            "Glassess": False,
+            "Topi": False,
             "Lightstick Kanan": False,
             "Lightstick Kiri": False,
             "FanKiri": False,
@@ -214,7 +214,7 @@ def main():
                             st.rerun()
 
     # 3. Toggle untuk atur posisi
-    for category in ["Mata", "Mulut", "Glassess", "FanKiri", "FanKanan"]:
+    for category in ["Mata", "Mulut", "Glassess", "Topi", "FanKiri", "FanKanan"]:
         if st.session_state.selected[category]:
             with st.expander(f"⚙️ Atur posisi {category}?", expanded=False):
                 st.session_state.adjust_settings[category] = st.checkbox(
@@ -226,7 +226,7 @@ def main():
     # 4. Kontrol posisi, ukuran, dan rotasi
     for category in ["Mata", "Mulut", "Glassess", "Topi", "FanKiri", "FanKanan"]:
         if st.session_state.selected[category] and (
-            category in ["Glassess", "Topi", "Fan"] or st.session_state.adjust_settings[category]
+            category in ["Fan"] or st.session_state.adjust_settings[category]
         ):
             st.subheader(f"Pengaturan {category}")
             
