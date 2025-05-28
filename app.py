@@ -56,7 +56,51 @@ COMPONENTS = {
         "t6": "assets/t6.webp",
         "t7": "assets/t7.webp",
         "None": None
+    },
+    "Lightstick Kanan": {
+        "lsr1": "assets/lsr1.webp",
+        "lsr2": "assets/lsr2.webp",
+        "lsr3": "assets/lsr3.webp",
+        "lsr4": "assets/lsr4.webp",
+        "lsr5": "assets/lsr5.webp",
+        "lsr6": "assets/lsr6.webp",
+        "lsr7": "assets/lsr7.webp",
+        "lsr8": "assets/lsr8.webp",
+        "lsr9": "assets/lsr9.webp",
+        "None": None
+    },
+    "Lightstick Kiri": {
+        "lsl1": "assets/lsl1.webp",
+        "lsl2": "assets/lsl2.webp",
+        "lsl3": "assets/lsl3.webp",
+        "lsl4": "assets/lsl4.webp",
+        "lsl5": "assets/lsl5.webp",
+        "lsl6": "assets/lsl6.webp",
+        "lsl7": "assets/lsl7.webp",
+        "lsl8": "assets/lsl8.webp",
+        "lsl9": "assets/lsl9.webp",
+        "None": None
+    },
+    "FanKiri": {
+        "fs1": "assets/fs1.webp",
+        "fs2": "assets/fs2.webp",
+        "fs3": "assets/fs3.webp",
+        "None": None
+    },
+    "FanKanan": {
+        "fs1": "assets/fs1.webp",
+        "fs2": "assets/fs2.webp",
+        "fs3": "assets/fs3.webp",
+        "None": None
     }
+}
+
+# Posisi default untuk lightstick
+DEFAULT_LS_POSITIONS = {
+    "Lightstick Kanan": {"x": 321, "y": 107, "scale": 0.50, "rotation": 8},
+    "Lightstick Kiri": {"x": -64, "y": 107, "scale": 0.50, "rotation": -8},
+    "FanKiri": {"x": -98, "y": 19, "scale": 0.50, "rotation": 28},
+    "FanKanan": {"x": 292, "y": 19, "scale": 0.50, "rotation": -28} 
 }
 
 # Cache untuk gambar yang sudah dimuat
@@ -82,6 +126,12 @@ def load_image(path):
         st.error(f"Gagal memuat gambar {path}: {str(e)}")
         return None
 
+def rotate_image(image, angle):
+    """Rotate image by given angle (in degrees) and return the rotated image with transparent background maintained."""
+    if angle == 0:
+        return image
+    return image.rotate(angle, expand=True, resample=Image.BICUBIC)
+
 def main():
     st.set_page_config(layout="centered", page_title="🎨Batsya Editor🎨")
     st.title("🦥Batsya Custom🦝")
@@ -94,21 +144,33 @@ def main():
             "Mulut": None,
             "Baju": None,
             "Glassess": None,
-            "Topi": None
+            "Topi": None,
+            "Lightstick Kanan": None,
+            "Lightstick Kiri": None,
+            "FanKiri": None,
+            "FanKanan": None
         }
     if 'positions' not in st.session_state:
         st.session_state.positions = {
-            "Mata": {"x": 0, "y": 0, "scale": 1.0},
-            "Mulut": {"x": 0, "y": 0, "scale": 1.0},
-            "Glassess": {"x": 4, "y": -101, "scale": 1.0},
-            "Topi": {"x": 134, "y": -110, "scale": 0.40}  # Posisi default lebih tinggi untuk topi
+            "Mata": {"x": 0, "y": 0, "scale": 1.0, "rotation": 0},
+            "Mulut": {"x": 0, "y": 0, "scale": 1.0, "rotation": 0},
+            "Glassess": {"x": 4, "y": -101, "scale": 1.0, "rotation": 0},
+            "Topi": {"x": 134, "y": -110, "scale": 0.40, "rotation": 0},
+            "Lightstick Kanan": DEFAULT_LS_POSITIONS["Lightstick Kanan"],
+            "Lightstick Kiri": DEFAULT_LS_POSITIONS["Lightstick Kiri"],
+            "FanKiri": DEFAULT_LS_POSITIONS["FanKiri"],
+            "FanKanan": DEFAULT_LS_POSITIONS["FanKanan"]
         }
     if 'adjust_settings' not in st.session_state:
         st.session_state.adjust_settings = {
             "Mata": False,
             "Mulut": False,
             "Glassess": True,
-            "Topi": True
+            "Topi": True,
+            "Lightstick Kanan": False,
+            "Lightstick Kiri": False,
+            "FanKiri": False,
+            "FanKanan": False
         }
 
     # 1. Tampilkan Base Image
@@ -119,38 +181,40 @@ def main():
         with cols[1]:
             st.image(base_img, width=400)
 
-    # 2. Pemilihan komponen
-    for category in ["Mata", "Mulut", "Baju", "Glassess", "Topi"]:
-        st.subheader(f"Pilih {category}")
-        
-        options = COMPONENTS[category]
-        cols = st.columns(5)
-        
-        for i, (name, path) in enumerate(options.items()):
-            with cols[i % 5]:
-                if path:
-                    img = load_image(path)
-                    if img:
-                        is_selected = st.session_state.selected[category] == path
-                        border_color = "#1E90FF" if is_selected else "transparent"
-                        
-                        st.markdown(
-                            f'<div style="border: 2px solid {border_color}; border-radius: 10px; padding: 5px; display: inline-block;">'
-                            f'<img src="data:image/png;base64,{image_to_base64(img)}" width="100" style="cursor: pointer;">'
-                            f'</div>',
-                            unsafe_allow_html=True
-                        )
-                        
-                        if st.button(f"Pilih {name}", key=f"btn_{category}_{name}"):
-                            st.session_state.selected[category] = path
+    # 2. Pemilihan komponen dengan expander
+    for category in ["Mata", "Mulut", "Baju", "Glassess", "Topi", "Lightstick Kiri", "Lightstick Kanan", "FanKiri", "FanKanan"]:
+        with st.expander(f"🔘 Pilih {category}", expanded=False):
+            options = COMPONENTS[category]
+            cols = st.columns(5)
+            
+            for i, (name, path) in enumerate(options.items()):
+                with cols[i % 5]:
+                    if path:
+                        img = load_image(path)
+                        if img:
+                            is_selected = st.session_state.selected[category] == path
+                            border_color = "#1E90FF" if is_selected else "transparent"
+                            
+                            st.markdown(
+                                f'<div style="border: 2px solid {border_color}; border-radius: 10px; padding: 5px; display: inline-block;">'
+                                f'<img src="data:image/png;base64,{image_to_base64(img)}" width="100" style="cursor: pointer;">'
+                                f'</div>',
+                                unsafe_allow_html=True
+                            )
+                            
+                            if st.button(f"Pilih {name}", key=f"btn_{category}_{name}"):
+                                st.session_state.selected[category] = path
+                                # Set default position for lightsticks
+                                if category in ["Lightstick Kiri", "Lightstick Kanan", "FanKiri", "FanKanan"]:
+                                    st.session_state.positions[category] = DEFAULT_LS_POSITIONS[category].copy()
+                                st.rerun()
+                    else:
+                        if st.button("❌ Hapus", key=f"btn_{category}_none"):
+                            st.session_state.selected[category] = None
                             st.rerun()
-                else:
-                    if st.button("❌ Hapus", key=f"btn_{category}_none"):
-                        st.session_state.selected[category] = None
-                        st.rerun()
 
-    # 3. Toggle untuk atur posisi mata/mulut
-    for category in ["Mata", "Mulut"]:
+    # 3. Toggle untuk atur posisi
+    for category in ["Mata", "Mulut", "Glassess", "FanKiri", "FanKanan"]:
         if st.session_state.selected[category]:
             with st.expander(f"⚙️ Atur posisi {category}?", expanded=False):
                 st.session_state.adjust_settings[category] = st.checkbox(
@@ -159,18 +223,18 @@ def main():
                     key=f"adjust_{category}"
                 )
 
-    # 4. Kontrol posisi dan ukuran
-    for category in ["Mata", "Mulut", "Glassess", "Topi"]:
+    # 4. Kontrol posisi, ukuran, dan rotasi
+    for category in ["Mata", "Mulut", "Glassess", "Topi", "FanKiri", "FanKanan"]:
         if st.session_state.selected[category] and (
-            category in ["Glassess", "Topi"] or st.session_state.adjust_settings[category]
+            category in ["Glassess", "Topi", "Fan"] or st.session_state.adjust_settings[category]
         ):
             st.subheader(f"Pengaturan {category}")
             
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3, col4 = st.columns(4)
             
             with col1:
                 new_x = st.slider(
-                    "Posisi Horizontal", -300, 300,
+                    "Posisi Horizontal", -400, 400,
                     st.session_state.positions[category]["x"],
                     key=f"{category}_x"
                 )
@@ -178,7 +242,7 @@ def main():
             
             with col2:
                 new_y = st.slider(
-                    "Posisi Vertikal", -300, 300,
+                    "Posisi Vertikal", -400, 400,
                     st.session_state.positions[category]["y"],
                     key=f"{category}_y"
                 )
@@ -191,6 +255,15 @@ def main():
                     key=f"{category}_scale"
                 )
                 st.session_state.positions[category]["scale"] = new_scale
+                
+            with col4:
+                if category in ["Lightstick Kiri", "Lightstick Kanan", "FanKiri", "FanKanan"]:
+                    new_rotation = st.slider(
+                        "Rotasi", -180, 180,
+                        st.session_state.positions[category]["rotation"],
+                        key=f"{category}_rotation"
+                    )
+                    st.session_state.positions[category]["rotation"] = new_rotation
 
     # 5. Gabungkan gambar
     if base_img and any(st.session_state.selected.values()):
@@ -206,8 +279,8 @@ def main():
         base_y = 150  # Padding atas
         result.paste(base_img, (base_x, base_y), base_img)
         
-        # Urutan layer yang benar
-        layer_order = ["Baju", "Mata", "Mulut", "Glassess", "Topi"]
+        # Urutan layer
+        layer_order = ["Baju", "Mata", "Mulut", "Glassess", "Topi", "FanKiri", "FanKanan", "Lightstick Kiri", "Lightstick Kanan"]
         
         for layer in layer_order:
             if st.session_state.selected[layer]:
@@ -219,6 +292,11 @@ def main():
                         scale = st.session_state.positions[layer]["scale"]
                         new_size = (int(width * scale), int(height * scale))
                         img = img.resize(new_size, Image.LANCZOS)
+                    
+                    # Apply rotation (khusus untuk lightstick)
+                    if layer in st.session_state.positions and "rotation" in st.session_state.positions[layer]:
+                        rotation = st.session_state.positions[layer]["rotation"]
+                        img = rotate_image(img, rotation)
                     
                     # Apply position (ditambahkan offset base image)
                     if layer in st.session_state.positions:
